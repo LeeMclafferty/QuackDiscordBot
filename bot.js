@@ -1,4 +1,12 @@
-console.log('Beep beep! 🤖')
+console.log('Beep beep! 🤖');
+
+// This is so I can use env files to hide sensitive variables when uploading code.
+/* Server hosting site have access to this package, but I have to npm install dotenv
+in my powershell.*/
+require("dotenv").config();
+
+//Adds fetch package functionality
+const fetch = require("node-fetch");
 
 //Require functions brings in Discord API and intents gateways.
 // Discord.Client is the JS object
@@ -16,7 +24,7 @@ const client = new Discord.Client( {
 
 /*This is the token from my bot to connect him to this code. The bot should now be
 associated with the client object */
-client.login('OTU5NjMyNjc5OTY2NTA3MDY5.YketlA.x2Q3_hzghdzj8PFU7p4-ls3V7Pk');
+client.login(process.env.TOKEN);
 
 /*This is a even handler. This is when the bot comes on, but there are many such
 as repsonding to messages, or reacting to button presses. 'ready' is the even,
@@ -62,10 +70,44 @@ what we specify.*/
  in the one channel. To Get the Channel ID you have to turn Developer mode on in Discord Client then
  right click on a channel, and click the 'copy ID' button. took that out so it can be used in all 
  channels.*/
-function gotMessage(msg) {
-    if(msg.content == '!Quack' || msg.content == '!quack' /*&& msg.channel.id == '959855923545923665'*/){
+async function gotMessage(msg) {
+
+    //splits string into an array, that way we can include key words like gif at tokens[0] then a searc
+    //term at token[1]
+    let tokens = msg.content.split(' ');
+
+    if(tokens[0] == '!Quack' || tokens[0] == '!quack' /*&& msg.channel.id == '959855923545923665'*/){
         const randReply = Math.floor((Math.random() * replies.length));
         //msg.reply(replies[randReply]);
         msg.channel.send(replies[randReply]);
+    }
+    // ` is no the same as ' 
+    // ` is template literal 
+    // ' is a string, but so is ""
+    else if(tokens[0] == '!duck' || tokens[0] == '!Duck') {
+
+        let searchTerm = "duck";
+        /*slice takes everything from in array from the entered index onward. Join then joins them at the 
+        " " spaces so it is one big word to plug into the url.*/
+       if(tokens.length > 1) {
+           searchTerm = "duck " + tokens.slice(1, tokens.length).join(" ");
+       }
+        //make a variable to store url from tenor api and pass in the tennor key in our .env file.
+        let url = `https://g.tenor.com/v1/search?q=${searchTerm}&key=${process.env.TENORKEY}&limit=20`
+
+        /** Await lets your fetch calls be asyncronys since you are not sure how long it will take to
+         * get the data. the function has to be modified as an async to use this functionality. 
+        */
+        let response = await fetch(url);
+        let json = await response.json();
+
+        //logged to console just to see meta data, aka the array i can pull urls from.
+        console.log(json);
+
+        //Floor function works the same as in CPP.
+        let randGif = Math.floor(Math.random() * json.results.length);
+        msg.channel.send(json.results[randGif].url);
+
+
     }
 }
